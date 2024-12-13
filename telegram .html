@@ -1,0 +1,194 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlokCoin Telegram Project</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="logo">FlokCoin</div>
+            <div class="nav">
+                <button id="claim-button">Claim 40 FLOK</button>
+                <button id="connect-wallet">Connect Wallet</button>
+            </div>
+        </header>
+
+        <!-- Main Content Section -->
+        <main class="main-content">
+            <div class="flok-info">
+                <h1>Welcome to the FlokCoin Game!</h1>
+                <p>Earn FlokCoins by playing games and completing tasks!</p>
+                <p>Your Balance: <span id="balance">0</span> FLOK</p>
+                <button id="flok-button">Tap to Mine FlokCoin</button>
+            </div>
+
+            <div class="flok-game">
+                <h2>FlokCoin Tap Game</h2>
+                <p>Mine FlokCoins by tapping the button!</p>
+                <p>Mined today: <span id="mined-coins">0</span> FLOK</p>
+                <p>Daily limit: 500 FLOK</p>
+            </div>
+
+            <!-- Referral Section -->
+            <div class="referral-info">
+                <h2>Your Referral Link</h2>
+                <p>Share this link with your friends to earn 10% of their mined FLOK!</p>
+                <input type="text" id="referral-link" readonly>
+                <button id="copy-referral-link">Copy Referral Link</button>
+                <p>Referral Earnings: <span id="referral-earnings">0</span> FLOK</p>
+            </div>
+        </main>
+
+        <!-- Bottom Bar -->
+        <footer class="footer">
+            <div class="footer-item" id="leaderboard">
+                <h3>Leaderboard</h3>
+                <ul id="leaderboard-list">
+                    <li>Player1: 120 FLOK</li>
+                    <li>Player2: 110 FLOK</li>
+                    <li>Player3: 100 FLOK</li>
+                </ul>
+            </div>
+
+            <div class="footer-item" id="tasks">
+                <h3>Tasks</h3>
+                <ul id="tasks-list">
+                    <li>Complete FlokCoin Survey</li>
+                    <li>Invite a Friend</li>
+                </ul>
+            </div>
+        </footer>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html><style>.referral-info {
+    background-color: #f0f0f6;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+#referral-link {
+    width: 80%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+#copy-referral-link {
+    padding: 10px 20px;
+    background-color: #ff9800;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+    border-radius: 5px;
+}
+
+#copy-referral-link:hover {
+    background-color: #ff5722;
+}</style><script>let balance = 0;
+let minedCoins = 0;
+let referralEarnings = 0;
+let lastClaimTime = 0;
+let dailyLimit = 500;
+let referrer = null; // This will store the referrer's address or identifier
+
+// Simulate getting the referral parameter from the URL
+const urlParams = new URLSearchParams(window.location.search);
+const referrerId = urlParams.get('referrer');
+if (referrerId) {
+    referrer = referrerId; // Set the referrer if available
+}
+
+// Generate a unique referral link for the user
+const referralLink = window.location.href.split('?')[0] + '?referrer=' + generateReferralId();
+document.getElementById("referral-link").value = referralLink;
+
+// Copy referral link to clipboard
+document.getElementById("copy-referral-link").addEventListener("click", () => {
+    const referralInput = document.getElementById("referral-link");
+    referralInput.select();
+    document.execCommand("copy");
+    alert("Referral link copied to clipboard!");
+});
+
+// Function to generate a unique referral ID (this could be based on user data in a real app)
+function generateReferralId() {
+    return Math.random().toString(36).substr(2, 9); // Random 9-character string
+}
+
+// Claim FLOK function
+document.getElementById("claim-button").addEventListener("click", () => {
+    const currentTime = Date.now();
+    if (currentTime - lastClaimTime >= 8 * 3600 * 1000) { // 8 hours in milliseconds
+        balance += 40;
+        lastClaimTime = currentTime;
+        document.getElementById("balance").textContent = balance;
+        alert("You claimed 40 FLOK tokens!");
+    } else {
+        const remainingTime = (8 * 3600 * 1000 - (currentTime - lastClaimTime)) / 1000;
+        const hours = Math.floor(remainingTime / 3600);
+        const minutes = Math.floor((remainingTime % 3600) / 60);
+        alert(`Please wait ${hours}h ${minutes}m to claim again.`);
+    }
+});
+
+// FlokCoin Tap Game Logic
+document.getElementById("flok-button").addEventListener("click", () => {
+    if (minedCoins < dailyLimit) {
+        minedCoins += 1;
+        document.getElementById("mined-coins").textContent = minedCoins;
+        document.getElementById("mined-coins").style.color = "green";
+
+        // If the user has a referrer, they get 10% of the mined coins
+        if (referrer) {
+            const referralReward = 0.1 * minedCoins;
+            referralEarnings += referralReward;
+            document.getElementById("referral-earnings").textContent = referralEarnings.toFixed(2);
+        }
+    } else {
+        document.getElementById("mined-coins").textContent = "Daily limit reached!";
+        document.getElementById("mined-coins").style.color = "red";
+    }
+});
+
+// Wallet Connection
+document.getElementById("connect-wallet").addEventListener("click", () => {
+    if (typeof window.ethereum !== 'undefined') {
+        window.ethereum.request({ method: 'eth_requestAccounts' })
+            .then(accounts => {
+                alert('Wallet connected: ' + accounts[0]);
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Connection failed. Please try again.');
+            });
+    } else {
+        alert('Please install MetaMask or a similar wallet extension.');
+    }
+});
+
+// Tasks List Functionality (Optional)
+const tasks = [
+    { task: "Complete FlokCoin Survey", completed: false },
+    { task: "Invite a Friend", completed: false }
+];
+
+const tasksList = document.getElementById("tasks-list");
+tasks.forEach((task, index) => {
+    const listItem = document.createElement("li");
+    listItem.textContent = task.task;
+    listItem.addEventListener("click", () => {
+        task.completed = !task.completed;
+        listItem.style.textDecoration = task.completed ? "line-through" : "none";
+    });
+    tasksList.appendChild(listItem);
+});</script>
